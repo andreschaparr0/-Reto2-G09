@@ -31,32 +31,95 @@ El controlador se encarga de mediar entre la vista y el modelo.
 """
 
 
-def new_controller():
+def new_controller(struc_list,struc_map,load_factor):
     """
     Crea una instancia del modelo
     """
-    #TODO: Llamar la función del modelo que crea las estructuras de datos
-    pass
+    control = {
+        "model": None
+    }
+    control["model"] = model.new_data_structs(struc_list,struc_map,load_factor)
+    return control
 
 
 # Funciones para la carga de datos
 
-def load_data(control, filename):
+def load_data(control, size, memflag):
     """
     Carga los datos del reto
     """
-    # TODO: Realizar la carga de datos
-    pass
+    football_data = control["model"]
+    match_results = loadResults(football_data, size)
+    shootouts = loadShootouts(football_data, size)
+    goal_scorers = loadGoalScorers(football_data, size)
+    #Medicion inicial de tiempo y memoria
+    start_time = get_time()
+    if memflag is True:
+        tracemalloc.start()
+        start_memory = get_memory()
+    #ejecucion principal
+    loadScorers(football_data, size)
+    #Medicion final de tiempo y memoria
+    stop_time = get_time()
+    delta_time_value = delta_time(start_time,stop_time)
+    
+    if memflag is True:
+        stop_memory = get_memory()
+        tracemalloc.stop()
+        # calcula la diferencia de memoria
+        delta_memory_value = delta_memory(stop_memory, start_memory)
+        # respuesta con los datos de tiempo y memoria
+        return match_results, goal_scorers, shootouts, delta_time_value, delta_memory_value
+    else:
+        # respuesta sin medir memoria
+        return match_results, goal_scorers, shootouts, delta_time_value
 
+def loadResults(football_data, size):
+    texto = "football/results-utf8-" +str(size)+".csv"
+    footballfile = cf.data_dir + texto
+    input_file = csv.DictReader(open(footballfile, encoding='utf-8'))
+    for result in input_file:
+        model.add_result(football_data, result, "match_results")
+    return model.data_size(football_data["match_results"])
+
+def loadGoalScorers(football_data, size):
+    texto = "football/goalscorers-utf8-" +str(size)+".csv"
+    footballfile = cf.data_dir +texto
+    input_file = csv.DictReader(open(footballfile, encoding='utf-8'))
+    for GoalScorer in input_file:
+        model.add_result(football_data, GoalScorer, "goal_scorers")
+    return model.data_size(football_data["goal_scorers"])
+
+def loadShootouts(football_data, size):
+    texto = "football/shootouts-utf8-" +str(size)+".csv"
+    footballfile = cf.data_dir + texto
+    input_file = csv.DictReader(open(footballfile, encoding='utf-8'))
+    for Shootout in input_file:
+        model.add_result(football_data, Shootout,"shootouts")
+    return model.data_size(football_data["shootouts"])
+
+def loadScorers(football_data, size):
+    texto = "football/goalscorers-utf8-" +str(size)+".csv"
+    footballfile = cf.data_dir +texto
+    input_file = csv.DictReader(open(footballfile, encoding='utf-8'))
+    for GoalScorer in input_file:
+        año = GoalScorer["date"]
+        año = año[:4]
+        GoalScorer = GoalScorer["scorer"]
+        model.add_Scorer(football_data, GoalScorer, año)
+    
 
 # Funciones de ordenamiento
 
-def sort(control):
+def sort(control, metodo):
     """
     Ordena los datos del modelo
     """
-    #TODO: Llamar la función del modelo para ordenar los datos
-    pass
+    start_time = get_time()
+    model.sort(control["model"], metodo)
+    end_time = get_time()
+    delta_t = delta_time(start_time, end_time)
+    return delta_t
 
 
 # Funciones de consulta sobre el catálogo
@@ -68,6 +131,10 @@ def get_data(control, id):
     #TODO: Llamar la función del modelo para obtener un dato
     pass
 
+
+def get_firts_and_last_3(control, type):
+    datos = model.get_firts_and_last_3(control,type)
+    return datos
 
 def req_1(control):
     """
